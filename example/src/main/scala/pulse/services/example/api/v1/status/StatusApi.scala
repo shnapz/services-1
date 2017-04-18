@@ -5,7 +5,7 @@ import java.nio.charset.Charset
 
 import com.twitter.util.Future
 import io.finch._
-import pulse.services.example.Settings
+import pulse.services.example.{CliParameters, ExampleConfig}
 import pulse.services.example.avro.AvroUtils
 
 import scala.util.{Failure, Success}
@@ -14,8 +14,8 @@ import scala.util.{Failure, Success}
   * Created by Andrew on 16.03.2017.
   */
 object StatusApi {
-  def statusApi(settings: Settings) = {
-    status :+: updateStatus(settings.statusAvroSchema)
+  def statusApi(config: ExampleConfig, cliParameters: CliParameters) = {
+    status :+: updateStatus(cliParameters.statusAvroSchema)
   }
 
   def status: Endpoint[Status] =

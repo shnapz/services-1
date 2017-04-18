@@ -1,30 +1,36 @@
-import sbt._, Keys._
-import dependencies._
+import sbt._
+import Keys._
+import pulse.plugin._
+import pulse.plugin.dependencies._
 import com.typesafe.sbt.packager.docker._
 import com.typesafe.sbt.packager.docker.Dockerfile._
 
 libraryDependencies ++= Seq (
   cats.all,
   fs2.core,
-  finch.core,
-  finch.circe,
-  logback.core,
-  logger.core,
-  finagle.core,
-  finagle.server,
-  finch.core,
-  finch.circe,
-  circe.core,
-  circe.generic,
-  scopt.core,
-  avro.core,
+  refined.core,
+  log4s.core,
+  sl4j.simple,
+  local.finch.core,
+  local.finch.circe,
+  local.finagle.core,
+  local.finagle.server,
+  local.circe.core,
+  local.circe.generic,
+  local.scopt.core,
+  local.avro.core,
   typesafe.config,
-  _test(finch.test),
+  _test(local.finch.test),
   _test(scalatest.core)
 )
 
-console.settings
-settings.docker
+settings.common
+
+publishing.settings
+
+local.settings
+
+local.docker
 
 dockerRepository := Some("pulse")
 dockerCommands := Seq(

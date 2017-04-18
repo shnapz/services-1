@@ -2,10 +2,14 @@ package pulse.services.example
 
 import java.io.File
 
+import cats.data.Kleisli
+import fs2.Task
+import pulse.config._
 import scopt.OptionParser
 
 object CliParameters {
-  def apply(args: List[String]): CliParameters = {
+
+  def apply(args: List[String]): Task[CliParameters] = {
     val parser = new OptionParser[CliParameters]("common") {
       opt[Boolean]("use-task-api")
         .action((b, c) => c.copy(useTaskApi = b))
@@ -17,8 +21,8 @@ object CliParameters {
     }
 
     parser.parse(args, CliParameters()) match {
-      case Some(config) => config
-      case None => throw new InvalidCmdArgsException("Invalid arguments passed")
+      case Some(config) => Task.now(config)
+      case None => Task.fail(new InvalidCmdArgsException("Invalid arguments passed"))
     }
   }
 }

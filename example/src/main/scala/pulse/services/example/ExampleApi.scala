@@ -11,12 +11,12 @@ import pulse.services.example.api.v1.status.{StatusApi, StatusTaskApi}
 /**
   * Created by Andrew on 16.03.2017.
   */
-case class ExampleApi(settings: Settings) extends ResponseEncoders {
+case class ExampleApi(config: ExampleConfig, cliParameters: CliParameters) extends ResponseEncoders {
   private def api = {
-    if (settings.useTaskApi)
-      StatusTaskApi.statusApi(settings)
+    if (cliParameters.useTaskApi)
+      StatusTaskApi.statusApi(config, cliParameters)
     else
-      StatusApi.statusApi(settings)
+      StatusApi.statusApi(config, cliParameters)
   }
 
   def apiService: Service[Request, Response] = api.toService
