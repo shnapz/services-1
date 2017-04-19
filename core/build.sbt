@@ -11,12 +11,12 @@ libraryDependencies ++= Seq (
   refined.core,
   log4s.core,
   sl4j.simple,
-  local.finch.core,
-  local.finch.circe,
-  local.finagle.core,
-  local.finagle.server,
-  local.circe.core,
-  _test(local.finch.test),
+  finch.core,
+  finch.circe,
+  finagle.core,
+  finagle.server,
+  circe.core,
+  _test(finch.test),
   _test(scalatest.core)
 )
 

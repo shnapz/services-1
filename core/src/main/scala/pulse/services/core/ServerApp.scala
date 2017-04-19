@@ -1,34 +1,34 @@
-package pulse.services
-package core
+package pulse.services.core
 
 import cats.data.Kleisli
-import org.log4s._
-import fs2.{Stream, Task}
+import cats.implicits._
+import fs2.interop.cats._
+import fs2._
+import com.twitter.app.App
 import com.twitter.finagle.{ListeningServer, NullServer}
 import com.twitter.server._
-import com.twitter.util.Await
-import com.twitter.app.App
-import com.twitter.logging.Logging
-import pulse.common.{Runner, logging}
+import fs2.Task._
+import org.log4s._
 import pulse.common.syntax.Strategies
-import pulse.config.{Conf, Source}
+import pulse.common.{Runner, logging}
 import pulse.config.typesafe._
+import pulse.config.{Conf, ReaderConf, Source}
+import pulse.services.core.exceptions.ServerStateException
 
 abstract class ServerApp[Config >: Null] extends App
   with AdminHttpServer
   with Admin
   with Lifecycle
   with Stats
-  with Strategies with Logging {
+  with Strategies {
 
   override def allowUndefinedFlags: Boolean = true
 
   private implicit val L = getLogger
 
   private val serverState = new StateMachine[LifeCycle, Config, ListeningServer] {
-    def initialState = (Init, Task(NullServer))
 
-    val transitionFunc: TransitionFunction = {
+    val transitionFunc: TransitionFunction = Kleisli {
       case Transition(Init, Started, config, _) =>
         server(args.toList, config)
       case Transition(Started, Started, config, srv) =>
@@ -38,30 +38,30 @@ abstract class ServerApp[Config >: Null] extends App
         } yield newSrv
       case Transition(Started, Stopped, _, srv) =>
         closeServer(srv)
+      case notSupported => fail(ServerStateException(s"Transition from ${notSupported.currentEvent} to ${notSupported.nextEvent} is not supported"))
     }
+
+    def initialState = (Init, now(NullServer))
+
   }
 
-  val readConfig: Kleisli[Task, Conf, Config]
+  val readConfig: ReaderConf[Config]
 
   def configSource: Source
 
   def server(args: List[String], config: Config): Task[ListeningServer]
 
-  def stopServer(): Task[ListeningServer] = {
-    for {
-      srv <- serverState.transitTo(Stopped, null)
-      _ <- logging.info("Server is stopped")
-    } yield srv
+  def stopServer(config: Config): Task[Unit] = {
+    serverState.transitTo(Stopped, config) >>= (_ => logging.info("Server is stopped"))
   }
 
-  def startServer(config: Config): Stream[Task, ListeningServer] = {
+  def startServer(config: Config): Stream[Task, ListeningServer] =
     Stream.eval {
       for {
         srv <- serverState.transitTo(Started, config)
         _ <- logging.info(s"Server is started with $config")
       } yield srv
     }
-  }
 
   def main(): Unit = {
     val runner = new ProgramRunner()
@@ -69,7 +69,7 @@ abstract class ServerApp[Config >: Null] extends App
   }
 
   private def closeServer(srv: ListeningServer): Task[ListeningServer] = {
-    Task(Await.result(srv.close())).map(_ => srv)
+    toTask(srv.close().map(_ => srv))
   }
 
   private sealed trait LifeCycle
@@ -80,7 +80,7 @@ abstract class ServerApp[Config >: Null] extends App
 
   private case object Stopped extends LifeCycle
 
-  private class ProgramRunner extends Runner {
+  private final class ProgramRunner extends Runner {
     protected override def run(args: List[String]): Task[Unit] = {
       val program = for {
         ce <- Conf.mutable(configSource)
@@ -96,3 +96,5 @@ abstract class ServerApp[Config >: Null] extends App
   }
 
 }
+
+

@@ -1,9 +1,8 @@
 package pulse.services.core
 
-import cats.{~>, _}
-import com.twitter.util.{Future, Promise, Return, Throw}
-import fs2.{Strategy, Task}
-
+import cats._
+import com.twitter.util.{Future, Promise}
+import fs2.Task
 
 trait Component {
 
