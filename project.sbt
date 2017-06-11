@@ -1,6 +1,6 @@
 import pulse.plugin._
 
-organization in Global := "pulse"
+organization in Global := "impulse-io"
 
 scalaVersion in Global := "2.11.8"
 

@@ -1,0 +1,31 @@
+language: scala
+scala:
+- 2.11.8
+jdk:
+- oraclejdk8
+branches:
+  only:
+  - master
+before_script:
+- if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git checkout -qf $TRAVIS_BRANCH; fi
+- if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git config --local user.name $GIT_USERNAME;
+  fi
+- if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git config --local user.email $GIT_USEREMAIL;
+  fi
+script:
+- sbt test
+- find $HOME/.sbt -name "*.lock" | xargs rm
+- find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+after_success:
+- '[ $TRAVIS_PULL_REQUEST = "false" ] && sh "$TRAVIS_BUILD_DIR/bintray.sh" && sbt
+  "release with-defaults"'
+cache:
+  directories:
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
+env:
+  global:
+  - GIT_USERNAME=kabas.andrew@gmail.com
+  - GIT_USEREMAIL=kabas.andrew@gmail.com
+  - BINTRAY_USER=impulso-io
+  - BINTRAY_API_KEY=c6f1158c76a8e7ee7ce373b6335ab4271eb0c233
